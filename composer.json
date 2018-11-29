@@ -1,0 +1,42 @@
+{
+    "name": "yootheme",
+    "version": "1.15.7",
+    "title": "YOOtheme",
+    "description": "A powerful, flexible and elegant website builder that allows you to create complex pages within minutes and customize every aspect of the theme.",
+    "homepage": "https://yootheme.com",
+    "copyright": "Copyright (C) YOOtheme GmbH",
+    "license": "GNU General Public License",
+    "authors": [
+        {
+            "name": "YOOtheme",
+            "email": "info@yootheme.com",
+            "homepage": "https://yootheme.com"
+        }
+    ],
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "git@github.com:yootheme/framework.git"
+        }
+    ],
+    "require": {
+        "yootheme/framework": "dev-develop"
+    },
+    "autoload": {
+        "psr-4": {
+            "YOOtheme\\": "vendor/yootheme/theme/src",
+            "YOOtheme\\Theme\\": [
+                "vendor/yootheme/theme/modules/builder/src",
+                "vendor/yootheme/theme/modules/settings/src",
+                "vendor/yootheme/theme/modules/styler/src",
+                "vendor/yootheme/theme/platforms/joomla/src",
+                "vendor/yootheme/theme/platforms/joomla-modules/src",
+                "vendor/yootheme/theme/platforms/wordpress/src",
+                "vendor/yootheme/theme/platforms/wordpress-widgets/src"
+            ]
+        }
+    },
+    "config": {
+        "optimize-autoloader": true
+    }
+}

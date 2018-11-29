@@ -1,1 +1,374 @@
+<!DOCTYPE html>
+<!-- kevindowd@mediaworks.co.nz -->
+<html lang="en">
 
+<head>
+    <title>Mediaworks</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <!-- edit styles as you wish -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+        }
+        
+        body {
+            background-color: white;
+            overflow: hidden;
+        }
+        
+        .adbanner {
+            position: relative;
+            width: 300px;
+            height: 250px;
+            background-color: white;
+            margin: 0 auto;
+        }
+        
+        #container {
+            display: block;
+            position: relative;
+            background-color: inherit;
+            top: 1px;
+            width: inherit;
+            height: inherit;
+            z-index: 2;
+            margin: 0 auto;
+            overflow: hidden;
+            /* outline: 1px solid red;
+            outline-offset: -1px; */
+        }
+        
+        canvas {
+            background-color: white;
+            cursor: ew-resize;
+        }
+        
+        .backup-style {
+            cursor: pointer;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 100;
+        }
+        
+        .helper {
+            position: absolute;
+            /* display: none; */
+            top: 70%;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 250;
+            pointer-events: none;
+            width: 60px;
+            height: 60px;
+            /* opacity: 0.6;; */
+        }
+        
+        .helper>img {
+            animation: animationFrames ease 2000ms;
+            animation-iteration-count: infinite;
+            animation-direction: alternate-reverse;
+            animation-delay: 2s;
+            transform-origin: 50% 50%;
+            opacity: 0;
+        }
+        
+        @keyframes animationFrames {
+            0% {
+                opacity: 1;
+                transform: translate(-100px, 5px) rotate(-6deg);
+            }
+            100% {
+                opacity: 1;
+                transform: translate(100px, -10px) rotate(6deg);
+            }
+        }
+    </style>
+
+
+    <script src="https://s0.2mdn.net/ads/studio/Enabler.js"></script>
+    <script src="cube.js"></script>
+    <script src="istouch.min.js"></script>
+    <script src="mobile_251118.min.js"></script>
+ 
+
+    <!-- editable stuff here -->
+    <script>
+        // lower number == faster spin
+        // if you change this speed update the CSS animation for the hand
+        var cube_speed = 2000;
+        var cube_initial_delay_time = 3000;
+
+        function face_one_click() {
+            Enabler.exit("face_one_exit",
+                "https://www.hoyts.co.nz/cinemas/entx-christchurch?utm_source=MediaWorks&utm_medium=Promotion&utm_campaign=entx%20Launch&utm_term=Cube%20Ad&utm_content=Image%201"
+            );
+        }
+
+        function face_two_click() {
+            Enabler.exit("face_two_exit",
+                "https://www.hoyts.co.nz/cinemas/entx-christchurch?utm_source=MediaWorks&utm_medium=Promotion&utm_campaign=entx%20Launch&utm_term=Cube%20Ad&utm_content=Image%202"
+            );
+        }
+
+        function face_three_click() {
+            Enabler.exit("face_three_exit",
+                "https://www.hoyts.co.nz/cinemas/entx-christchurch?utm_source=MediaWorks&utm_medium=Promotion&utm_campaign=entx%20Launch&utm_term=Cube%20Ad&utm_content=Image%203"
+            );
+        }
+
+        function face_four_click() {
+            Enabler.exit("face_four_exit",
+                "https://www.hoyts.co.nz/cinemas/entx-christchurch?utm_source=MediaWorks&utm_medium=Promotion&utm_campaign=entx%20Launch&utm_term=Cube%20Ad&utm_content=Image%204"
+            );
+        }
+
+        function face_backup_click() {
+            Enabler.exit("face_backup_exit",
+                "https://www.hoyts.co.nz/cinemas/entx-christchurch?utm_source=MediaWorks&utm_medium=Promotion&utm_campaign=entx%20Launch&utm_term=Cube%20Ad&utm_content=Image%201"
+            );
+            return false;
+        }
+    </script>
+    <!-- end of editable things, alter at your peril -->
+
+
+    <script>
+        function onceOnly(e) {
+            e.currentTarget.removeEventListener(e.type, onceOnly, true);
+            var helperElement = document.querySelector(".helper");
+
+            if (!!helperElement){
+              
+                var p = helperElement.parentNode;
+                 if (p instanceof HTMLElement) {
+                   p.removeChild(helperElement);
+               } else {
+                   helperElement.hidden = true;
+               }
+
+            }
+           
+            
+            
+        }
+
+        function dom_init(e) {
+            e.currentTarget.removeEventListener(e.type, dom_init, true);
+            var adbanner = document.querySelector(".adbanner");
+            if (!!adbanner) {
+                adbanner.addEventListener("touchstart", onceOnly, true);
+                adbanner.addEventListener("mousedown", onceOnly, true);
+            }
+            checkForThree();
+        }
+
+        document.addEventListener("DOMContentLoaded", dom_init, true);
+    </script>
+</head>
+
+<body>
+    <div class="adbanner">
+        <div id="container">
+            <canvas id="adcanvas"></canvas>
+        </div>
+        <div class="helper">
+            <!-- this containing element can be deleted if you want-->
+            <img src="hand.svg" alt="hand">
+        </div>
+    </div>
+
+    <script>
+        function broadcast_event(name) {
+            var evt = null;
+            try {
+                evt = new Event(name);
+            } catch (error) {
+                evt = document.createEvent("Event");
+                evt.initEvent(name, true, false);
+            }
+            window.dispatchEvent(evt);
+        }
+
+        function onFaceBitmapLoaded(e) {
+            broadcast_event("onImageLoaded");
+        }
+
+        function checkForThree() {
+            if (typeof window.THREE === "object") {
+                console.log("1,2,THREE")
+
+                var isWebGL = (function() {
+                    try {
+                        var canvas = document.createElement('canvas');
+                        return !!(window.WebGLRenderingContext && (canvas.getContext('webgl') || canvas.getContext(
+                            'experimental-webgl')));
+                    } catch (e) {
+                        return false;
+                    }
+
+                })();
+
+                Main(isWebGL);
+
+
+                return;
+            }
+            setTimeout(checkForThree.bind(this), 50);
+        }
+
+        function attach_supported_events(o) {
+            // splitting-up mouse and touch code
+            // loading the correct code based upon device capabilities as defined by Modinizr
+            if (Modernizr.touchevents) {
+                console.log("loading touch code");
+                Enabler.loadScript(Enabler.getUrl("hastouch.js"), function() {
+                    attach_touch_handlers(o.renderer.domElement, o.camera, o.mesh);
+                });
+            } else {
+                console.log("loading mouse only code");
+                Enabler.loadScript(Enabler.getUrl("hasmouse.js"), function() {
+                    var eventsManager = new EventsManager();
+                    eventsManager.init(o.renderer.domElement, o.mesh);
+                });
+
+            }
+
+        }
+
+
+        function Main(isWebGL) {
+            if (isWebGL) {
+                var o = init();
+                var tick = new CubeManager();
+                attach_supported_events(o);
+                tick.cube_camera = o.camera;
+                tick.cube_scene = o.scene;
+                tick.cube_mesh = o.mesh;
+                tick.cube_renderer = o.renderer;
+                tick.cube_initial_time_delay = cube_initial_delay_time
+                tick.cube_speed = cube_speed;
+                tick.start_cube_spin = true;
+                Enabler.counter("startCubeRotation");
+            } else {;
+                Enabler.loadScript(Enabler.getUrl("showbackup.js"), function() {
+                    showBackup();
+                });
+            }
+
+        }
+    </script>
+
+    <script>
+        //if we get this far we are good to go
+        function init() {
+            var camera = new THREE.PerspectiveCamera(32, 1.15, 1, 1000);
+            camera.position.set(0, 0, 600);
+
+
+            var scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xffffff);
+
+            var renderer = new THREE.WebGLRenderer({
+                alpha: false,
+                canvas: adcanvas,
+                antialias: true,
+                preserveDrawingBuffer: false,
+            });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setClearColor(0xffffff, 1);
+            renderer.setSize(300, 250);
+            renderer.sortObjects = false;
+
+            renderer.shadowMap.enabled = false;
+            raycaster = new THREE.Raycaster();
+
+
+            var white_pixel = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+            var black_pixel = "data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs="
+            var path = "";
+
+            // left to right animation
+            var face_one = new THREE.TextureLoader().load(path + "faceone.jpg", onFaceBitmapLoaded);
+            var face_two = new THREE.TextureLoader().load(path + "facetwo.jpg", onFaceBitmapLoaded);
+            var face_three = new THREE.TextureLoader().load(path + "facethree.jpg", onFaceBitmapLoaded);
+            var face_four = new THREE.TextureLoader().load(path + "facefour.jpg", onFaceBitmapLoaded);
+            var face_top = new THREE.TextureLoader().load(black_pixel);
+            var face_bottom = new THREE.TextureLoader().load(black_pixel);
+
+            // var n = renderer.capabilities.getMaxAnisotropy();
+            if (!Modernizr.touchevents) {
+                face_one.anisotropy = 2;
+                face_two.anisotropy = 2;
+                face_three.anisotropy = 2;
+                face_four.anisotropy = 2;
+            }
+
+
+
+
+            var isWire = !!0;
+
+            materials = [
+                new THREE.MeshBasicMaterial({
+                    map: face_two,
+                    wireframe: isWire,
+                    fog: false,
+                    name: "face_one"
+                }),
+                new THREE.MeshBasicMaterial({
+                    map: face_four,
+                    wireframe: isWire,
+                    fog: false,
+                    name: "face_two"
+                }),
+                new THREE.MeshBasicMaterial({
+                    map: face_top,
+                    wireframe: isWire,
+                    fog: false,
+                    name: "face_top"
+                }),
+                new THREE.MeshBasicMaterial({
+                    map: face_bottom,
+                    wireframe: isWire,
+                    fog: false,
+                    name: "face_bottom"
+                }),
+                new THREE.MeshBasicMaterial({
+                    map: face_one,
+                    wireframe: isWire,
+                    fog: false,
+                    name: "face_three"
+                }),
+                new THREE.MeshBasicMaterial({
+                    map: face_three,
+                    wireframe: isWire,
+                    fog: false,
+                    name: "face_four"
+                })
+
+            ];
+
+
+            var geometry = new THREE.BoxGeometry(300, 210, 300, 1, 1, 1)
+            mesh = new THREE.Mesh(geometry, materials);
+            mesh.scale.x = mesh.scale.y = mesh.scale.z = 1.0;
+            scene.add(mesh);
+
+
+            return {
+                camera: camera,
+                scene: scene,
+                mesh: mesh,
+                renderer: renderer
+            }
+
+        }
+    </script>
+</body>
+
+</html>
